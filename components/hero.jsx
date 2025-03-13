@@ -13,7 +13,7 @@ const HeroSection = () => {
 
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      const scrollThreshold = 100;
+      const scrollThreshold = 10;
 
       if (scrollPosition > scrollThreshold) {
         imageElement.classList.add("scrolled");
@@ -25,7 +25,7 @@ const HeroSection = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
+   
   return (
     <section className="pt-40 pb-20 px-4">
       <div className="container mx-auto text-center">
@@ -49,7 +49,7 @@ const HeroSection = () => {
           </Link>
         </div>
         <div className="hero-image-wrapper mt-5 md:mt-0">
-          <div ref={imageRef} className="hero-image">
+          <div ref={imageRef} className="hero-image pt-4">
             <Image
               src="/banner.png"
               width={1280}
