@@ -1,4 +1,7 @@
+"use client"; 
 import React from "react";
+import CountUp from 'react-countup';
+import { useInView } from 'react-intersection-observer';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
@@ -12,6 +15,13 @@ import HeroSection from "@/components/hero";
 import Link from "next/link";
 
 const LandingPage = () => {
+  const parseValue = (value) => {
+    // Extract numeric part and suffix
+    const numericPart = parseFloat(value.replace(/[^0-9.]/g, ''));
+    const suffix = value.replace(/[0-9.]/g, '');
+    return { numericPart, suffix };
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -21,14 +31,30 @@ const LandingPage = () => {
       <section className="py-20 bg-blue-50">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {statsData.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">
-                  {stat.value}
+            {statsData.map((stat, index) => {
+              const { ref, inView } = useInView({
+                threshold: 0.3,
+                triggerOnce: true,
+              });
+              const { numericPart, suffix } = parseValue(stat.value);
+
+              return (
+                <div key={index} className="text-center" ref={ref}>
+                  <div className="text-4xl font-bold text-blue-600 mb-2">
+                    {inView ? (
+                      <CountUp
+                        end={numericPart}
+                        duration={2}
+                        separator=","
+                        suffix={suffix}
+                        decimals={stat.value.includes('.') ? 1 : 0}
+                      />
+                    ) : '0'}
+                  </div>
+                  <div className="text-gray-600">{stat.label}</div>
                 </div>
-                <div className="text-gray-600">{stat.label}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
