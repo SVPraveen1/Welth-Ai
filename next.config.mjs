@@ -1,7 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    devIndicators: false,
-    transpilePackages: ['react-countup']
-};
-
-export default nextConfig;
+    images: {
+      remotePatterns: [
+        {
+          protocol: "https",
+          hostname: "randomuser.me",
+        },
+      ],
+    },
+  
+    experimental: {
+      serverActions: {
+        bodySizeLimit: "5mb",
+      },
+    },
+  };
+  
+  export default nextConfig;
+  
