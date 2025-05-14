@@ -4,7 +4,6 @@ import CountUp from 'react-countup';
 import { useInView } from 'react-intersection-observer';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import Image from "next/image";
 import {
   featuresData,
   howItWorksData,
@@ -108,8 +107,8 @@ const LandingPage = () => {
               <Card key={index} className="p-6">
                 <CardContent className="pt-4">
                   <div className="flex items-center mb-4">
-                    <Image
-                      src={testimonial.image}
+                    <img
+                      src= "https://i.pinimg.com/736x/71/b3/e4/71b3e4159892bb319292ab3b76900930.jpg"
                       alt={testimonial.name}
                       width={40}
                       height={40}
