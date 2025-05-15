@@ -12,6 +12,7 @@ export default function NotFound() {
       </p>
       <Link href="/">
         <Button>Return Home</Button>
+        
       </Link>
     </div>
   );

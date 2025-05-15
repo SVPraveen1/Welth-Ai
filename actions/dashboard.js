@@ -52,7 +52,9 @@ export async function createAccount(data) {
     });
 
     if (!user) {
-      throw new Error("User not found");
+      // For server actions, return an object with error information
+      return { error: "Unauthorized", success: false };
+      // Or handle differently depending on your application flow
     }
 
     // Convert balance to float before saving
