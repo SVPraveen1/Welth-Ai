@@ -4,6 +4,8 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { sendEmail } from "@/actions/send-email";
+import EmailTemplate from "@/emails/template";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -11,6 +13,14 @@ const serializeAmount = (obj) => ({
   ...obj,
   amount: obj.amount.toNumber(),
 });
+
+// Helper function to check if date is in a new month compared to last alert
+function isNewMonth(lastAlertDate, currentDate) {
+  return (
+    lastAlertDate.getMonth() !== currentDate.getMonth() ||
+    lastAlertDate.getFullYear() !== currentDate.getFullYear()
+  );
+}
 
 // Create Transaction
 export async function createTransaction(data) {
@@ -61,6 +71,78 @@ export async function createTransaction(data) {
 
       return newTransaction;
     });
+
+    // Only check budget for expense transactions
+    if (data.type === "EXPENSE") {
+      try {
+        // Get user's budget
+        const budget = await db.budget.findFirst({
+          where: { userId: user.id },
+          include: { user: true }
+        });
+
+        if (budget) {
+          // Calculate current month's expenses
+          const startDate = new Date();
+          startDate.setDate(1); // Start of current month
+          
+          const expenses = await db.transaction.aggregate({
+            where: {
+              userId: user.id,
+              type: "EXPENSE",
+              date: {
+                gte: startDate,
+              },
+            },
+            _sum: { amount: true },
+          });
+          
+          const totalExpenses = expenses._sum.amount ? Number(expenses._sum.amount) : 0;
+          const budgetAmount = Number(budget.amount || 0);
+          
+          if (budgetAmount > 0) {
+            const percentageUsed = (totalExpenses / budgetAmount) * 100;
+            
+            // Check if threshold is crossed (80%) and if we haven't sent an alert this month
+            // or if threshold is critical (95%)
+            const isNewAlert = !budget.lastAlertSent || 
+                              isNewMonth(new Date(budget.lastAlertSent), new Date()) || 
+                              percentageUsed >= 95;
+            
+            if (percentageUsed >= 80 && isNewAlert) {
+              console.log(`Budget alert: ${percentageUsed.toFixed(1)}% used by user ${user.id}`);
+              
+              // Send email alert
+              const emailResult = await sendEmail({
+                to: user.email,
+                subject: `Budget Alert: ${percentageUsed.toFixed(1)}% used`,
+                react: EmailTemplate({
+                  userName: user.name || "User",
+                  type: "budget-alert",
+                  data: {
+                    percentageUsed,
+                    budgetAmount,
+                    totalExpenses
+                  }
+                })
+              });
+              
+              if (emailResult.success) {
+                // Update last alert sent timestamp
+                await db.budget.update({
+                  where: { id: budget.id },
+                  data: { lastAlertSent: new Date() }
+                });
+                console.log(`Budget alert email sent to ${user.email}`);
+              }
+            }
+          }
+        }
+      } catch (budgetError) {
+        // Log but don't fail the transaction creation if budget check fails
+        console.error("Error checking budget after transaction creation:", budgetError);
+      }
+    }
 
     revalidatePath("/dashboard");
     revalidatePath(`/account/${transaction.accountId}`);
