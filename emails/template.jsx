@@ -355,7 +355,8 @@ export default function EmailTemplate({
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
           <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
         </Head>
-        <Preview>Budget Alert: {percentage.toFixed(1)}% of your monthly budget has been used</Preview>
+        <Preview>Budget Alert: {percentage}% of your monthly budget has been used</Preview>
+        
         <Body style={{
           backgroundColor: "#f8fafc",
           fontFamily: "'Inter', sans-serif",

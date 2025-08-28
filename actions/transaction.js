@@ -99,18 +99,37 @@ export async function createTransaction(data) {
           
           const totalExpenses = expenses._sum.amount ? Number(expenses._sum.amount) : 0;
           const budgetAmount = Number(budget.amount || 0);
-          
-          if (budgetAmount > 0) {
+            if (budgetAmount > 0) {
             const percentageUsed = (totalExpenses / budgetAmount) * 100;
             
-            // Check if threshold is crossed (80%) and if we haven't sent an alert this month
-            // or if threshold is critical (95%)
-            const isNewAlert = !budget.lastAlertSent || 
-                              isNewMonth(new Date(budget.lastAlertSent), new Date()) || 
-                              percentageUsed >= 95;
+            // Define alert thresholds
+            const thresholds = [75, 85, 95, 100];
+            const lastAlertPercentage = budget.lastAlertPercentage ? Number(budget.lastAlertPercentage) : 0;
             
-            if (percentageUsed >= 80 && isNewAlert) {
-              console.log(`Budget alert: ${percentageUsed.toFixed(1)}% used by user ${user.id}`);
+            // Find the highest threshold that has been crossed
+            let currentThreshold = null;
+            for (const threshold of thresholds) {
+              if (percentageUsed >= threshold) {
+                currentThreshold = threshold;
+              }
+            }
+            
+            // Send alert if:
+            // 1. We've crossed a new threshold that's higher than the last alert percentage
+            // 2. It's a new month (reset alerts)
+            // 3. No alert has been sent yet and we're above 75%
+            const isNewMonth = !budget.lastAlertSent || 
+                              (new Date(budget.lastAlertSent).getMonth() !== new Date().getMonth() ||
+                               new Date(budget.lastAlertSent).getFullYear() !== new Date().getFullYear());
+            
+            const shouldSendAlert = currentThreshold && (
+              currentThreshold > lastAlertPercentage || 
+              isNewMonth ||
+              !budget.lastAlertSent
+            );
+            
+            if (shouldSendAlert) {
+              console.log(`Budget alert: ${percentageUsed.toFixed(1)}% used by user ${user.id}, threshold: ${currentThreshold}%`);
               
               // Send email alert
               const emailResult = await sendEmail({
@@ -128,12 +147,15 @@ export async function createTransaction(data) {
               });
               
               if (emailResult.success) {
-                // Update last alert sent timestamp
+                // Update last alert sent timestamp and percentage
                 await db.budget.update({
                   where: { id: budget.id },
-                  data: { lastAlertSent: new Date() }
+                  data: { 
+                    lastAlertSent: new Date(),
+                    lastAlertPercentage: currentThreshold
+                  }
                 });
-                console.log(`Budget alert email sent to ${user.email}`);
+                console.log(`Budget alert email sent to ${user.email} for ${currentThreshold}% threshold`);
               }
             }
           }

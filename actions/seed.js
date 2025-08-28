@@ -3,8 +3,8 @@
 import { db } from "@/lib/prisma";
 import { subDays } from "date-fns";
 
-const ACCOUNT_ID = "e9918e7a-f5bf-4cd6-bb01-31e14849e7da";
-const USER_ID = "36d48745-4e40-4eee-bcb2-ad45dccc8fe2";
+const ACCOUNT_ID = "f749596a-04bb-49fd-a20f-e7a2641d141f";
+const USER_ID = "d506d060-19c8-4cdf-a84c-b6f43c835c56";
 
 // Categories with their typical amount ranges
 const CATEGORIES = {
