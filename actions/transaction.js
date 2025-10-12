@@ -306,7 +306,26 @@ export async function getUserTransactions(query = {}) {
 // Scan Receipt
 export async function scanReceipt(file) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Validate GEMINI_API_KEY exists
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("GEMINI_API_KEY is not set in environment variables");
+      throw new Error("Receipt scanning service is not configured. Please contact support.");
+    }
+
+    // Validate file
+    if (!file || !file.type) {
+      throw new Error("Invalid file provided");
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    if (!validTypes.includes(file.type.toLowerCase())) {
+      throw new Error("Invalid file type. Please upload a JPEG, PNG, WebP, or HEIC image.");
+    }
+
+    console.log(`Starting receipt scan for file type: ${file.type}, size: ${file.size} bytes`);
+
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
     // Convert File to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
@@ -330,7 +349,7 @@ export async function scanReceipt(file) {
         "category": "string"
       }
 
-      If its not a recipt, return an empty object
+      If its not a receipt, return an empty object: {}
     `;
 
     const result = await model.generateContent([
@@ -345,24 +364,47 @@ export async function scanReceipt(file) {
 
     const response = await result.response;
     const text = response.text();
+    console.log("Gemini API raw response:", text);
+
     const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
 
     try {
       const data = JSON.parse(cleanedText);
+      
+      // Check if response is empty object (not a receipt)
+      if (Object.keys(data).length === 0) {
+        throw new Error("This doesn't appear to be a receipt. Please upload a valid receipt image.");
+      }
+
+      // Validate required fields
+      if (!data.amount || !data.date) {
+        throw new Error("Could not extract required information from receipt. Please try a clearer image.");
+      }
+
+      console.log("Successfully parsed receipt data:", data);
+
       return {
         amount: parseFloat(data.amount),
         date: new Date(data.date),
-        description: data.description,
-        category: data.category,
-        merchantName: data.merchantName,
+        description: data.description || "Receipt purchase",
+        category: data.category || "other-expense",
+        merchantName: data.merchantName || "Unknown merchant",
       };
     } catch (parseError) {
       console.error("Error parsing JSON response:", parseError);
-      throw new Error("Invalid response format from Gemini");
+      console.error("Cleaned text was:", cleanedText);
+      throw new Error("Invalid response format from receipt scanner. Please try again.");
     }
   } catch (error) {
     console.error("Error scanning receipt:", error);
-    throw new Error("Failed to scan receipt");
+    // Re-throw with more context if it's not already a user-friendly message
+    if (error.message.includes("GEMINI_API_KEY") || 
+        error.message.includes("Invalid file") || 
+        error.message.includes("doesn't appear to be") ||
+        error.message.includes("Could not extract")) {
+      throw error;
+    }
+    throw new Error(`Failed to scan receipt: ${error.message}`);
   }
 }
 

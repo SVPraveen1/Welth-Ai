@@ -1,13 +1,47 @@
+// import { getUserAccounts } from "@/actions/dashboard";
+// import { defaultCategories } from "@/data/categories";
+// import { AddTransactionForm } from "../_components/transaction-form";
+// import { getTransaction } from "@/actions/transaction";
+
+// export default async function AddTransactionPage({ searchParams }) {
+//   const accounts = await getUserAccounts();
+  
+//   // Fixed searchParams access
+//   const editId = searchParams ? searchParams.edit : null;
+
+//   let initialData = null;
+//   if (editId) {
+//     const transaction = await getTransaction(editId);
+//     initialData = transaction;
+//   }
+
+//   return (
+//     <div className="max-w-3xl mx-auto px-5">
+//       <div className="flex justify-center md:justify-normal mb-8">
+//         <h1 className="text-5xl gradient-title mb-8">{editId?"Edit":"Add"} Transaction</h1>
+//       </div>
+//       <AddTransactionForm
+//         accounts={accounts}
+//         categories={defaultCategories}
+//         editMode={!!editId}
+//         initialData={initialData}
+//       />
+//     </div>
+//   );
+// }
+
 import { getUserAccounts } from "@/actions/dashboard";
 import { defaultCategories } from "@/data/categories";
 import { AddTransactionForm } from "../_components/transaction-form";
 import { getTransaction } from "@/actions/transaction";
 
 export default async function AddTransactionPage({ searchParams }) {
+  // ✅ Await searchParams before using its values (Next.js 14+ requirement)
+  const params = await searchParams;
+  const editId = params?.edit || null;
+
+  // Fetch accounts (server-side)
   const accounts = await getUserAccounts();
-  
-  // Fixed searchParams access
-  const editId = searchParams ? searchParams.edit : null;
 
   let initialData = null;
   if (editId) {
@@ -18,8 +52,11 @@ export default async function AddTransactionPage({ searchParams }) {
   return (
     <div className="max-w-3xl mx-auto px-5">
       <div className="flex justify-center md:justify-normal mb-8">
-        <h1 className="text-5xl gradient-title mb-8">{editId?"Edit":"Add"} Transaction</h1>
+        <h1 className="text-5xl gradient-title mb-8">
+          {editId ? "Edit" : "Add"} Transaction
+        </h1>
       </div>
+
       <AddTransactionForm
         accounts={accounts}
         categories={defaultCategories}

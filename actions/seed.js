@@ -2,9 +2,7 @@
 
 import { db } from "@/lib/prisma";
 import { subDays } from "date-fns";
-
-const ACCOUNT_ID = "f749596a-04bb-49fd-a20f-e7a2641d141f";
-const USER_ID = "d506d060-19c8-4cdf-a84c-b6f43c835c56";
+import { checkUser } from "@/lib/checkUser";
 
 // Categories with their typical amount ranges
 const CATEGORIES = {
@@ -43,9 +41,31 @@ function getRandomCategory(type) {
 
 export async function seedTransactions() {
   try {
+    // Get current authenticated user
+    const user = await checkUser();
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Get user's default account or first account
+    const account = await db.account.findFirst({
+      where: { userId: user.id },
+      orderBy: [
+        { isDefault: "desc" }, // Default account first
+        { createdAt: "asc" }    // Then oldest account
+      ]
+    });
+
+    if (!account) {
+      return { 
+        success: false, 
+        error: "No account found. Please create an account first." 
+      };
+    }
+
     // Generate 90 days of transactions
     const transactions = [];
-    let totalBalance = 0;
+    let totalBalance = Number(account.balance) || 0; // Start with current balance
 
     for (let i = 90; i >= 0; i--) {
       const date = subDays(new Date(), i);
@@ -68,8 +88,8 @@ export async function seedTransactions() {
           date,
           category,
           status: "COMPLETED",
-          userId: USER_ID,
-          accountId: ACCOUNT_ID,
+          userId: user.id,
+          accountId: account.id,
           createdAt: date,
           updatedAt: date,
         };
@@ -81,9 +101,12 @@ export async function seedTransactions() {
 
     // Insert transactions in batches and update account balance
     await db.$transaction(async (tx) => {
-      // Clear existing transactions
+      // Clear existing transactions for this account
       await tx.transaction.deleteMany({
-        where: { accountId: ACCOUNT_ID },
+        where: { 
+          accountId: account.id,
+          userId: user.id 
+        },
       });
 
       // Insert new transactions
@@ -93,14 +116,16 @@ export async function seedTransactions() {
 
       // Update account balance
       await tx.account.update({
-        where: { id: ACCOUNT_ID },
+        where: { id: account.id },
         data: { balance: totalBalance },
       });
     });
 
     return {
       success: true,
-      message: `Created ${transactions.length} transactions`,
+      message: `Created ${transactions.length} transactions for account: ${account.name}`,
+      accountName: account.name,
+      newBalance: totalBalance
     };
   } catch (error) {
     console.error("Error seeding transactions:", error);
