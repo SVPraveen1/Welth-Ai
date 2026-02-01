@@ -78,14 +78,14 @@ export async function createTransaction(data) {
         // Get user's budget
         const budget = await db.budget.findFirst({
           where: { userId: user.id },
-          include: { user: true }
+          include: { user: true },
         });
 
         if (budget) {
           // Calculate current month's expenses
           const startDate = new Date();
           startDate.setDate(1); // Start of current month
-          
+
           const expenses = await db.transaction.aggregate({
             where: {
               userId: user.id,
@@ -96,16 +96,20 @@ export async function createTransaction(data) {
             },
             _sum: { amount: true },
           });
-          
-          const totalExpenses = expenses._sum.amount ? Number(expenses._sum.amount) : 0;
+
+          const totalExpenses = expenses._sum.amount
+            ? Number(expenses._sum.amount)
+            : 0;
           const budgetAmount = Number(budget.amount || 0);
-            if (budgetAmount > 0) {
+          if (budgetAmount > 0) {
             const percentageUsed = (totalExpenses / budgetAmount) * 100;
-            
+
             // Define alert thresholds
             const thresholds = [75, 85, 95, 100];
-            const lastAlertPercentage = budget.lastAlertPercentage ? Number(budget.lastAlertPercentage) : 0;
-            
+            const lastAlertPercentage = budget.lastAlertPercentage
+              ? Number(budget.lastAlertPercentage)
+              : 0;
+
             // Find the highest threshold that has been crossed
             let currentThreshold = null;
             for (const threshold of thresholds) {
@@ -113,24 +117,29 @@ export async function createTransaction(data) {
                 currentThreshold = threshold;
               }
             }
-            
+
             // Send alert if:
             // 1. We've crossed a new threshold that's higher than the last alert percentage
             // 2. It's a new month (reset alerts)
             // 3. No alert has been sent yet and we're above 75%
-            const isNewMonth = !budget.lastAlertSent || 
-                              (new Date(budget.lastAlertSent).getMonth() !== new Date().getMonth() ||
-                               new Date(budget.lastAlertSent).getFullYear() !== new Date().getFullYear());
-            
-            const shouldSendAlert = currentThreshold && (
-              currentThreshold > lastAlertPercentage || 
-              isNewMonth ||
-              !budget.lastAlertSent
-            );
-            
+            const isNewMonth =
+              !budget.lastAlertSent ||
+              new Date(budget.lastAlertSent).getMonth() !==
+                new Date().getMonth() ||
+              new Date(budget.lastAlertSent).getFullYear() !==
+                new Date().getFullYear();
+
+            const shouldSendAlert =
+              currentThreshold &&
+              (currentThreshold > lastAlertPercentage ||
+                isNewMonth ||
+                !budget.lastAlertSent);
+
             if (shouldSendAlert) {
-              console.log(`Budget alert: ${percentageUsed.toFixed(1)}% used by user ${user.id}, threshold: ${currentThreshold}%`);
-              
+              console.log(
+                `Budget alert: ${percentageUsed.toFixed(1)}% used by user ${user.id}, threshold: ${currentThreshold}%`,
+              );
+
               // Send email alert
               const emailResult = await sendEmail({
                 to: user.email,
@@ -141,28 +150,33 @@ export async function createTransaction(data) {
                   data: {
                     percentageUsed,
                     budgetAmount,
-                    totalExpenses
-                  }
-                })
+                    totalExpenses,
+                  },
+                }),
               });
-              
+
               if (emailResult.success) {
                 // Update last alert sent timestamp and percentage
                 await db.budget.update({
                   where: { id: budget.id },
-                  data: { 
+                  data: {
                     lastAlertSent: new Date(),
-                    lastAlertPercentage: currentThreshold
-                  }
+                    lastAlertPercentage: currentThreshold,
+                  },
                 });
-                console.log(`Budget alert email sent to ${user.email} for ${currentThreshold}% threshold`);
+                console.log(
+                  `Budget alert email sent to ${user.email} for ${currentThreshold}% threshold`,
+                );
               }
             }
           }
         }
       } catch (budgetError) {
         // Log but don't fail the transaction creation if budget check fails
-        console.error("Error checking budget after transaction creation:", budgetError);
+        console.error(
+          "Error checking budget after transaction creation:",
+          budgetError,
+        );
       }
     }
 
@@ -309,7 +323,9 @@ export async function scanReceipt(file) {
     // Validate GEMINI_API_KEY exists
     if (!process.env.GEMINI_API_KEY) {
       console.error("GEMINI_API_KEY is not set in environment variables");
-      throw new Error("Receipt scanning service is not configured. Please contact support.");
+      throw new Error(
+        "Receipt scanning service is not configured. Please contact support.",
+      );
     }
 
     // Validate file
@@ -318,14 +334,25 @@ export async function scanReceipt(file) {
     }
 
     // Validate file type
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    const validTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/heic",
+      "image/heif",
+    ];
     if (!validTypes.includes(file.type.toLowerCase())) {
-      throw new Error("Invalid file type. Please upload a JPEG, PNG, WebP, or HEIC image.");
+      throw new Error(
+        "Invalid file type. Please upload a JPEG, PNG, WebP, or HEIC image.",
+      );
     }
 
-    console.log(`Starting receipt scan for file type: ${file.type}, size: ${file.size} bytes`);
+    console.log(
+      `Starting receipt scan for file type: ${file.type}, size: ${file.size} bytes`,
+    );
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // Convert File to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
@@ -370,15 +397,19 @@ export async function scanReceipt(file) {
 
     try {
       const data = JSON.parse(cleanedText);
-      
+
       // Check if response is empty object (not a receipt)
       if (Object.keys(data).length === 0) {
-        throw new Error("This doesn't appear to be a receipt. Please upload a valid receipt image.");
+        throw new Error(
+          "This doesn't appear to be a receipt. Please upload a valid receipt image.",
+        );
       }
 
       // Validate required fields
       if (!data.amount || !data.date) {
-        throw new Error("Could not extract required information from receipt. Please try a clearer image.");
+        throw new Error(
+          "Could not extract required information from receipt. Please try a clearer image.",
+        );
       }
 
       console.log("Successfully parsed receipt data:", data);
@@ -393,15 +424,19 @@ export async function scanReceipt(file) {
     } catch (parseError) {
       console.error("Error parsing JSON response:", parseError);
       console.error("Cleaned text was:", cleanedText);
-      throw new Error("Invalid response format from receipt scanner. Please try again.");
+      throw new Error(
+        "Invalid response format from receipt scanner. Please try again.",
+      );
     }
   } catch (error) {
     console.error("Error scanning receipt:", error);
     // Re-throw with more context if it's not already a user-friendly message
-    if (error.message.includes("GEMINI_API_KEY") || 
-        error.message.includes("Invalid file") || 
-        error.message.includes("doesn't appear to be") ||
-        error.message.includes("Could not extract")) {
+    if (
+      error.message.includes("GEMINI_API_KEY") ||
+      error.message.includes("Invalid file") ||
+      error.message.includes("doesn't appear to be") ||
+      error.message.includes("Could not extract")
+    ) {
       throw error;
     }
     throw new Error(`Failed to scan receipt: ${error.message}`);
