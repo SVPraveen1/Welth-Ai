@@ -20,7 +20,7 @@ import { updateBudget } from "@/actions/budget";
 export function BudgetProgress({ initialBudget, currentExpenses }) {
   const [isEditing, setIsEditing] = useState(false);
   const [newBudget, setNewBudget] = useState(
-    initialBudget?.amount?.toString() || ""
+    initialBudget?.amount?.toString() || "",
   );
 
   const {
@@ -64,7 +64,7 @@ export function BudgetProgress({ initialBudget, currentExpenses }) {
   }, [error]);
 
   return (
-    <Card>
+    <Card className="border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white rounded-2xl">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex-1">
           <CardTitle className="text-sm font-medium">
@@ -104,7 +104,7 @@ export function BudgetProgress({ initialBudget, currentExpenses }) {
                 <CardDescription>
                   {initialBudget
                     ? `$${currentExpenses.toFixed(
-                        2
+                        2,
                       )} of $${initialBudget.amount.toFixed(2)} spent`
                     : "No budget set"}
                 </CardDescription>

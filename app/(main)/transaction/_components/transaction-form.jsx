@@ -113,7 +113,7 @@ export function AddTransactionForm({
       toast.success(
         editMode
           ? "Transaction updated successfully"
-          : "Transaction created successfully"
+          : "Transaction created successfully",
       );
       reset();
       router.push(`/account/${transactionResult.data.accountId}`);
@@ -125,11 +125,14 @@ export function AddTransactionForm({
   const date = watch("date");
 
   const filteredCategories = categories.filter(
-    (category) => category.type === type
+    (category) => category.type === type,
   );
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-6 bg-white rounded-3xl p-6 md:p-10 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mt-4"
+    >
       {/* Receipt Scanner - Only show in create mode */}
       {!editMode && <ReceiptScanner onScanComplete={handleScanComplete} />}
 
@@ -231,7 +234,7 @@ export function AddTransactionForm({
               variant="outline"
               className={cn(
                 "w-full pl-3 text-left font-normal",
-                !date && "text-muted-foreground"
+                !date && "text-muted-foreground",
               )}
             >
               {date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -305,32 +308,32 @@ export function AddTransactionForm({
       )}
 
       {/* Actions */}
-<div className="flex justify-between mt-4">
-  <Button
-    type="button"
-    variant="outline"
-    className="w-1/2 py-2"
-    onClick={() => router.back()}
-  >
-    Cancel
-  </Button>
-  <Button
-    type="submit"
-    className="w-1/2 py-2"
-    disabled={transactionLoading}
-  >
-    {transactionLoading ? (
-      <>
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        {editMode ? "Updating..." : "Creating..."}
-      </>
-    ) : editMode ? (
-      "Update Transaction"
-    ) : (
-      "Create Transaction"
-    )}
-  </Button>
-</div>
+      <div className="flex gap-4 mt-8">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-1/2 py-2 border-gray-200"
+          onClick={() => router.back()}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          className="w-1/2 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md transition-all"
+          disabled={transactionLoading}
+        >
+          {transactionLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {editMode ? "Updating..." : "Creating..."}
+            </>
+          ) : editMode ? (
+            "Update Transaction"
+          ) : (
+            "Create Transaction"
+          )}
+        </Button>
+      </div>
     </form>
   );
 }

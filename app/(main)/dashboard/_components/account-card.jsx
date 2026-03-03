@@ -50,7 +50,7 @@ export function AccountCard({ account }) {
   }, [error]);
 
   return (
-    <Card className="hover:shadow-md transition-shadow group relative">
+    <Card className="border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all rounded-2xl group relative">
       <Link href={`/account/${id}`}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium capitalize">
@@ -63,20 +63,20 @@ export function AccountCard({ account }) {
           />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
+          <div className="text-3xl font-extrabold text-blue-950">
             ${parseFloat(balance).toFixed(2)}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-gray-500 font-medium">
             {type.charAt(0) + type.slice(1).toLowerCase()} Account
           </p>
         </CardContent>
-        <CardFooter className="flex justify-between text-sm text-muted-foreground">
-          <div className="flex items-center">
-            <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" />
+        <CardFooter className="flex justify-between text-sm text-muted-foreground pt-4 border-t border-gray-50 mt-4">
+          <div className="flex items-center px-2 py-1 rounded-full bg-green-50 text-green-700 font-medium text-xs">
+            <ArrowUpRight className="mr-1 h-3 w-3" />
             Income
           </div>
-          <div className="flex items-center">
-            <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" />
+          <div className="flex items-center px-2 py-1 rounded-full bg-red-50 text-red-700 font-medium text-xs">
+            <ArrowDownRight className="mr-1 h-3 w-3" />
             Expense
           </div>
         </CardFooter>

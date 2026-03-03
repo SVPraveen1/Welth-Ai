@@ -34,12 +34,12 @@ const COLORS = [
 
 export function DashboardOverview({ accounts, transactions }) {
   const [selectedAccountId, setSelectedAccountId] = useState(
-    accounts.find((a) => a.isDefault)?.id || accounts[0]?.id
+    accounts.find((a) => a.isDefault)?.id || accounts[0]?.id,
   );
 
   // Filter transactions for selected account
   const accountTransactions = transactions.filter(
-    (t) => t.accountId === selectedAccountId
+    (t) => t.accountId === selectedAccountId,
   );
 
   // Get recent transactions (last 5)
@@ -73,13 +73,13 @@ export function DashboardOverview({ accounts, transactions }) {
     ([category, amount]) => ({
       name: category,
       value: amount,
-    })
+    }),
   );
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {/* Recent Transactions Card */}
-      <Card>
+      <Card className="border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white rounded-2xl">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-base font-normal">
             Recent Transactions
@@ -126,7 +126,7 @@ export function DashboardOverview({ accounts, transactions }) {
                         "flex items-center",
                         transaction.type === "EXPENSE"
                           ? "text-red-500"
-                          : "text-green-500"
+                          : "text-green-500",
                       )}
                     >
                       {transaction.type === "EXPENSE" ? (
@@ -145,7 +145,7 @@ export function DashboardOverview({ accounts, transactions }) {
       </Card>
 
       {/* Expense Breakdown Card */}
-      <Card>
+      <Card className="border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base font-normal">
             Monthly Expense Breakdown

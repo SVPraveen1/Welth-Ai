@@ -41,7 +41,7 @@ export function AccountChart({ transactions }) {
 
     // Filter transactions within date range
     const filtered = transactions.filter(
-      (t) => new Date(t.date) >= startDate && new Date(t.date) <= endOfDay(now)
+      (t) => new Date(t.date) >= startDate && new Date(t.date) <= endOfDay(now),
     );
 
     // Group transactions by date
@@ -60,7 +60,7 @@ export function AccountChart({ transactions }) {
 
     // Convert to array and sort by date
     return Object.values(grouped).sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
+      (a, b) => new Date(a.date) - new Date(b.date),
     );
   }, [transactions, dateRange]);
 
@@ -71,12 +71,12 @@ export function AccountChart({ transactions }) {
         income: acc.income + day.income,
         expense: acc.expense + day.expense,
       }),
-      { income: 0, expense: 0 }
+      { income: 0, expense: 0 },
     );
   }, [filteredData]);
 
   return (
-    <Card>
+    <Card className="border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white rounded-2xl">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
         <CardTitle className="text-base font-normal">
           Transaction Overview
